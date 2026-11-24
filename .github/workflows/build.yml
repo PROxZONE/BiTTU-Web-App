@@ -1,0 +1,42 @@
+name: build
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (debug)
+        run: swift build
+      - name: Build (release)
+        run: swift build -c release
+      - name: Bundle app
+        run: |
+          chmod +x scripts/make-app.sh
+          ./scripts/make-app.sh
+      - name: Create DMG
+        run: |
+          mkdir -p build/dmg
+          cp -R build/BiTTU.app build/dmg/
+          ln -s /Applications build/dmg/Applications
+          hdiutil create -volname "BiTTU Web App" -srcfolder build/dmg -ov -format UDZO "build/BiTTU-Web-App.dmg"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BiTTU-app
+          path: build/BiTTU.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BiTTU-Web-App-dmg
+          path: build/BiTTU-Web-App.dmg
+      - name: Attach DMG to release
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v$(date +%Y.%m.%d)"
+          gh release create "$TAG" --title "BiTTU Web App $TAG" --notes "Download BiTTU-Web-App.dmg, open it and drag BiTTU into Applications." --target "$GITHUB_SHA" || true
+          gh release upload "$TAG" "build/BiTTU-Web-App.dmg" --clobber
