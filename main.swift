@@ -1,7 +1,2 @@
-import AppKit
-
-let app = NSApplication.shared
-let delegate = AppDelegate()
-app.delegate = delegate
-app.setActivationPolicy(.regular)
-app.run()
+// This file is not part of the build.
+// The real app entry point is Sources/BiTTU/main.swift (see Package.swift).
