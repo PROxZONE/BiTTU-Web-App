@@ -2,10 +2,10 @@ import Foundation
 import WebKit
 
 /// Cookie policy / first-party isolation.
-/// Brave-style: cookies are first-party by default — third-party requests get
-/// no cookies at all, and a strict mode drops cookies entirely. Enforced with
-/// a generated WebKit content rule list (`block-cookies`), so it applies to
-/// every subresource before the request leaves the tab.
+/// Brave-style: cookies are first-party by default. Third-party requests get
+/// no cookies, and a strict mode drops cookies entirely. Enforced with a
+/// generated WebKit content rule list (block-cookies), so it applies to every
+/// subresource before the request leaves the tab.
 enum CookiePolicy {
     /// allowAll = cookies work normally; blockThirdParty = first-party
     /// isolation (default); blockAll = strict, no cookies anywhere.
@@ -81,7 +81,8 @@ enum CookiePolicy {
             completion(nil)
             return
         }
-        let json = rulesJSON() ?? "[{\"trigger\":{\"url-filter\":\".*\"},\"action\":{\"type\":\"block-cookies\"}}]" # Escaped for the string literal here
+        let fallback = "{"trigger":{"url-filter":".*"},"action":{"type":"block-cookies"}}"
+        let json = rulesJSON() ?? "[" + fallback + "]"
         store.compileContentRuleList(forIdentifier: ruleListIdentifier,
                                      encodedContentRuleList: json) { list, error in
             if let error {
