@@ -26,7 +26,7 @@ enum ContentBlocker {
 
         for (name, url) in files {
             guard let json = try? String(contentsOf: url, encoding: .utf8) else {
-                NSLog("BiTTU: could not read blocklist \(name)")
+                NSLog("BiTTU: could not read blocklist " + name)
                 continue
             }
             group.enter()
@@ -34,15 +34,15 @@ enum ContentBlocker {
                 if let list {
                     lock.lock(); compiled.append(list); lock.unlock()
                 } else if let error {
-                    NSLog("BiTTU: blocklist \(name) failed to compile: \(error.localizedDescription)")
-                }
+                    NSLog("BiTTU: blocklist " + name + " failed to compile: " + error.localizedDescription)
+                } 
                 group.leave()
             }
         }
 
         group.notify(queue: .main) {
             sharedRuleLists = compiled.sorted { $0.identifier < $1.identifier }
-            NSLog("BiTTU: \\(sharedRuleLists.count)/\\(files.count) blocklists active")
+            NSLog("BiTTU: " + String(sharedRuleLists.count) + "/" + String(files.count) + " blocklists active")
             completion()
         }
     }
