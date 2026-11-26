@@ -1,11 +1,9 @@
 .DS_Store
-build/
-.swiftpm/
+/.build
+/build
 *.xcodeproj
-xcuserdata/
-DerivedData/
 Package.resolved
-
+.swiftpm
 # Generated at build time by scripts/build-blocklists.py
 Sources/BiTTU/Resources/blocklists/easylist*.json
 Sources/BiTTU/Resources/blocklists/easyprivacy*.json
