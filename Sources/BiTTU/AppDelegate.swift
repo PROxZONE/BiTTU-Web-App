@@ -4,6 +4,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var windowController: BrowserWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        AutoUpdater.shared.start()
         CookiePolicy.load()
         ContentBlocker.compileAll { [weak self] in
             guard let self else { return }
@@ -32,6 +33,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let appItem = NSMenuItem()
         let appMenu = NSMenu()
         appMenu.addItem(withTitle: "About BiTTU", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        if AutoUpdater.shared.isEnabled {
+            let checkItem = appMenu.addItem(withTitle: "Check for Updates…", action: #selector(AutoUpdater.checkForUpdates(_:)), keyEquivalent: "u")
+            checkItem.target = AutoUpdater.shared
+            appMenu.addItem(.separator())
+        }
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "Quit BiTTU", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = appMenu
@@ -52,7 +58,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let editMenu = NSMenu(title: "Edit")
         editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
         editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "p")
         editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         editItem.submenu = editMenu
         mainMenu.addItem(editItem)
