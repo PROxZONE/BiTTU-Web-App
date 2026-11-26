@@ -27,15 +27,24 @@ enum HTTPSOnly {
         return !isAllowed(host: host)
     }
 
+    /// HTML-escapes a URL for safe interpolation into the warning page.
+    /// Built with string concatenation so the source contains no escaped
+    /// quote characters (escaping-proof for content-layer writes).
+    static func escapedHTML(_ text: String) -> String {
+        let quote = Character(UnicodeScalar(34))
+        var out = text
+        out = out.replacingOccurrences(of: String(Character(UnicodeScalar(38))), with: "&amp;")
+        out = out.replacingOccurrences(of: "<", with: "&lt;")
+        out = out.replacingOccurrences(of: ">", with: "&gt;")
+        out = out.replacingOccurrences(of: String(quote), with: "&quot;")
+        return out
+    }
+
     /// The standalone warning page. Tapping "Go to the insecure site" posts
     /// back through the bittuHttps script-message handler, which allows the
     /// host for this session and loads it.
     static func warningPage(for url: URL) -> String {
-        let display = url.absoluteString
-            .replacingOccurrences(of: "&", with: "&amp;")
-            .replacingOccurrences(of: "<", with: "&lt;")
-            .replacingOccurrences(of: ">", with: "&gt;")
-            .replacingOccurrences(of: "\"', with: "&quot;")
+        let display = escapedHTML(url.absoluteString)
         return """
         <!DOCTYPE html><html><head><meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
