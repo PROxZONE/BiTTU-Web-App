@@ -126,8 +126,7 @@ final class DownloadManager: NSObject, WKDownloadDelegate {
                 }
                 return line
             }
-            label.stringValue = lines.joined(separator: "
-")
+            label.stringValue = lines.joined(separator: String(UnicodeScalar(10)))
         }
         DownloadManager.onChange = update
         refresh.target = DownloadManager.shared
