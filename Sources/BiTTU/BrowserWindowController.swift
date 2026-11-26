@@ -226,7 +226,7 @@ final class BrowserWindowController: NSWindowController, WKNavigationDelegate {
         shieldLabel.stringValue = tab.isPrivate
             ? "Shields up · private tab · permissions blocked"
             : "Shields up · permissions blocked"
-        window?.title = title
+        window?.title = tab.title
     }
 
     // MARK: Actions (menu + buttons)
