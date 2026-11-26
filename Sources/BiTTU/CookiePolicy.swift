@@ -2,13 +2,7 @@ import Foundation
 import WebKit
 
 /// Cookie policy / first-party isolation.
-/// Brave-style: cookies are first-party by default. Third-party requests get
-/// no cookies, and a strict mode drops cookies entirely. Enforced with a
-/// generated WebKit content rule list (block-cookies), so it applies to every
-/// subresource before the request leaves the tab.
 enum CookiePolicy {
-    /// allowAll = cookies work normally; blockThirdParty = first-party
-    /// isolation (default); blockAll = strict, no cookies anywhere.
     enum Mode: String, CaseIterable, Codable {
         case allowAll = "allow-all"
         case blockThirdParty = "block-third-party"
@@ -31,7 +25,6 @@ enum CookiePolicy {
     }()
 
     static private(set) var mode: Mode = .blockThirdParty
-    /// The compiled rule list for the current mode, filled by compile(store:).
     static private(set) var compiled: WKContentRuleList?
 
     static func load() {
@@ -51,14 +44,12 @@ enum CookiePolicy {
         NSLog("BiTTU cookie policy set to " + newMode.rawValue)
     }
 
-    /// WebKit content-blocker rules implementing the policy.
     static func rulesJSON() -> String? {
         var rules: [[String: Any]] = []
         switch mode {
         case .allowAll:
             return nil
         case .blockThirdParty:
-            // No cookies on third-party requests: everything is first-party only.
             rules.append([
                 "trigger": ["url-filter": ".*", "load-type": ["third-party"]],
                 "action": ["type": "block-cookies"],
@@ -74,15 +65,19 @@ enum CookiePolicy {
         return String(data: data, encoding: .utf8)
     }
 
-    /// (Re)compiles the policy rule list and returns it, or nil for allowAll.
     static func compile(store: WKContentRuleListStore,
                         completion: @escaping (WKContentRuleList?) -> Void) {
         guard mode != .allowAll else {
             completion(nil)
             return
         }
-        let fallback = "{"trigger":{"url-filter":".*"},"action":{"type":"block-cookies"}}"
-        let json = rulesJSON() ?? "[" + fallback + "]"
+        let fallbackDict: [String: Any] = [
+            "trigger": ["url-filter": ".*"],
+            "action": ["type": "block-cookies"],
+        ]
+        let fallbackData = JSONSerialization.data(withJSONObject: [fallbackDict])
+        let fallback = String(data: fallbackData, encoding: .utf8) ?? "[]"
+        let json = rulesJSON() ?? fallback
         store.compileContentRuleList(forIdentifier: ruleListIdentifier,
                                      encodedContentRuleList: json) { list, error in
             if let error {
