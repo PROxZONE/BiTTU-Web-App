@@ -16,12 +16,12 @@ enum SecurityPolicy {
             && trimmed.contains(".")
             && !trimmed.contains("..")
             && trimmed.last != "."
-        if looksLikeDomain, let url = URL(string: "https://\(trimmed)") {
+        if looksLikeDomain, let url = URL(string: "https://" + trimmed) {
             return url
         }
 
         let encoded = trimmed.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? trimmed
-        return URL(string: "https://duckduckgo.com/?q=\(encoded)")
+        return URL(string: "https://duckduckgo.com/?q=" + encoded)
     }
 
     /// Upgrade any http URL to https.
@@ -33,7 +33,7 @@ enum SecurityPolicy {
     }
 
     /// Only plain web content is allowed. Everything else (file:, ftp:,
-    /// javascript:, custom schemes…) is cancelled and logged.
+    /// javascript:, custom schemes...) is cancelled and logged.
     static func navigationAllowed(_ request: URLRequest) -> Bool {
         guard let url = request.url,
               let scheme = url.scheme?.lowercased() else {
@@ -42,7 +42,7 @@ enum SecurityPolicy {
         }
         let allowed = (scheme == "https" || scheme == "http")
         if !allowed {
-            NSLog("BiTTU blocked non-web scheme \'\(scheme)\' → \(url.absoluteString)")
+            NSLog("BiTTU blocked non-web scheme " + scheme + " ( " + url.absoluteString + " )")
         }
         return allowed
     }
