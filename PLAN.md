@@ -84,5 +84,12 @@ web view with or without the content-rule lists live.
 Acceptance: privacy checks (e.g. Cover Your Tracks style tests) show hardened results.
 
 ## Phase 4: Distribution
-- [ ] Signed & notarized build artifact from CI, Sparkle auto-update
+- [x] Signed & notarized build artifact from CI, Sparkle auto-update
 Acceptance: downloadable .app opens on a clean Mac without Gatekeeper friction.
+  CI signs with a Developer ID certificate (secrets: APPLE_CERT_P12_BASE64,
+  APPLE_CERT_PASSWORD, APPLE_CODESIGN_IDENTITY), notarizes + staples the DMG
+  (secrets: APPLE_NOTARY_ID/PASSWORD/TEAM_ID), attaches it to a GitHub release,
+  and publishes appcast.xml to gh-pages signed with Sparkle's EdDSA key
+  (secrets/vars: SPARKLE_EDDSA_KEY, SPARKLE_EDDSA_PUBLIC_KEY). Until those
+  secrets are set, CI still builds and ships an ad-hoc-signed DMG with the
+  in-app updater disabled; see DISTRIBUTION.md.
