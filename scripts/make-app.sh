@@ -3,6 +3,18 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Full EasyList/EasyPrivacy at build time: download the filter sources and
+# compile them into WebKit content-blocker JSON chunks. The small bundled
+# core list stays as the offline fallback if this step is skipped.
+BLOCKLISTS="Sources/BiTTU/Resources/blocklists"
+if command -v python3 >/dev/null && curl -sfL -o /tmp/bittu-easylist.txt https://easylist.to/easylist/easylist.txt \
+   && curl -sfL -o /tmp/bittu-easyprivacy.txt https://easylist.to/easylist/easyprivacy.txt; then
+    python3 scripts/build-blocklists.py /tmp/bittu-easylist.txt "$BLOCKLISTS/easylist.json"
+    python3 scripts/build-blocklists.py /tmp/bittu-easyprivacy.txt "$BLOCKLISTS/easyprivacy.json"
+else
+    echo "make-app: could not fetch EasyList/EasyPrivacy — shipping bundled core list only"
+fi
+
 swift build -c release
 
 APP="build/BiTTU.app"
