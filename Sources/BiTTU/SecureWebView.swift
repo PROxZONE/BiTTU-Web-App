@@ -5,7 +5,7 @@ final class SecureWebView: WKWebView {
     var onStateChange: (() -> Void)?
 
     override func didMoveToWindow() {
-        super.toWindow()
+        super.didMoveToWindow()
         onStateChange?()
     }
 }
