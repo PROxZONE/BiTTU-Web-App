@@ -16,7 +16,7 @@ enum SecurityPolicy {
             && trimmed.contains(".")
             && !trimmed.contains("..")
             && trimmed.last != "."
-        if looksLikeDomain, let url = URL(string: "https:\(trimmed)") {
+        if looksLikeDomain, let url = URL(string: "https://\(trimmed)") {
             return url
         }
 
@@ -42,7 +42,7 @@ enum SecurityPolicy {
         }
         let allowed = (scheme == "https" || scheme == "http")
         if !allowed {
-            NSLog("BiTTU blocked non-web scheme '\(scheme)' → \(url.absoluteString)")
+            NSLog("BiTTU blocked non-web scheme \'\(scheme)\' → \(url.absoluteString)")
         }
         return allowed
     }
