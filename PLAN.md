@@ -50,23 +50,33 @@ renderer hardening beyond what WKWebView provides.
 ## Phase 1: Secure working browser core (this run)
 Thin vertical slice: real tab UI → real page loads through the security policy →
 blocking layer active.
-- [ ] SPM package, .gitignore, PLAN.md
-- [ ] Browser window: toolbar (back/forward/reload/shield), tab bar (normal + private tabs)
-- [ ] Navigation: address bar resolves URLs vs DuckDuckGo search; Enter loads page
-- [ ] Security policy: only http/https allowed; http upgraded to https; other schemes cancelled
-- [ ] Permission gate: camera/mic/motion denied, popups blocked, JS dialogs handled
-- [ ] Content blocker: bundled rule lists compiled and attached to every tab
-- [ ] `scripts/make-app.sh` bundles build/BiTTU.app
+- [x] SPM package, .gitignore, PLAN.md
+- [x] Browser window: toolbar (back/forward/reload/shield), tab bar (normal + private tabs)
+- [x] Navigation: address bar resolves URLs vs DuckDuckGo search; Enter loads page
+- [x] Security policy: only http/https allowed; http upgraded to https; other schemes cancelled
+- [x] Permission gate: camera/mic/motion denied, popups blocked, JS dialogs handled
+- [x] Content blocker: bundled rule lists compiled and attached to every tab
+- [x] `scripts/make-app.sh` bundles build/BiTTU.app
 - [ ] README with build/run instructions; CI macOS build green on GitHub
+  <!-- Code + README done and verified (swiftc -parse, blocklist JSON valid, make-app.sh shellcheck).
+       CI blocked: every Actions run is cancelled in ~1s by an account-level Actions billing/spend
+       limit — fix at https://github.com/settings/billing, then re-run the "build" workflow. -->
 
 Acceptance: `swift build` on macOS succeeds (CI green), app launches, loads sites,
 blocks listed trackers, denies permissions, blocks popups.
 
 ## Phase 2: Everyday browsing polish
-- [ ] Bookmarks and history (local, exportable), downloads UI
-- [ ] Per-site shield toggle and counter of blocked requests
-- [ ] Custom search engines, reader mode
+- [x] Bookmarks and history (local, exportable), downloads UI
+- [x] Per-site shield toggle and counter of blocked requests
+- [x] Custom search engines, reader mode
 Acceptance: settings persist locally and per-site shields change blocking live.
+Implementation: `UserData.swift` (bookmarks/history/engines as JSON in
+~/Library/Application Support/BiTTU, ⌘D bookmark, exportable via save panel),
+`Shields.swift` (per-host shield toggle, ⇧⌘S), `Downloads.swift` (WKDownloadDelegate
+plus downloads panel, ⌘J), `LibraryWindows.swift` (bookmarks/history/search-engine
+windows), `ReaderMode.swift` (⌥⌘R extraction window). Non-downloadable MIME
+responses hand off to the download manager; shields switching rebuilds the tab's
+web view with or without the content-rule lists live.
 
 ## Phase 3: Brave-level privacy hardening
 - [ ] Ship full EasyList/EasyPrivacy lists, fingerprint-protection script injection
