@@ -45,8 +45,6 @@ public sealed class Tab : IDisposable
         CoreWebView2Environment environment,
         CoreWebView2ControllerOptions? options)
     {
-        return webView.EnsureCoreWebView2Async(environment, options);
-
         webView.CoreWebView2InitializationCompleted += (_, e) =>
         {
             if (!e.IsSuccess) return;
@@ -140,6 +138,8 @@ public sealed class Tab : IDisposable
             // FingerprintShield: same farbling script as the macOS build.
             _ = core.AddScriptToExecuteOnDocumentCreatedAsync(FingerprintShield.Source);
         };
+
+        return webView.EnsureCoreWebView2Async(environment, options);
     }
 
     public void Dispose() => ((IDisposable)WebView).Dispose();
