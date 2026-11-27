@@ -27,7 +27,7 @@ final class DownloadManager: NSObject, WKDownloadDelegate {
         let expected = response.expectedContentLength
         items.append(Item(filename: name, url: response.url?.absoluteString ?? "unknown",
                           expectedBytes: expected, receivedBytes: 0,
-                          finished: false, failed: false, destination: nil)))
+                          finished: false, failed: false, destination: nil))
         showWindow()
         onChange?()
     }
