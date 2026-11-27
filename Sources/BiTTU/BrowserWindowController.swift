@@ -11,13 +11,12 @@ final class BrowserWindowController: NSWindowController, WKNavigationDelegate {
     private let tabStack = NSStackView()
     private let container = NSView()
     private let addressField = NSTextField()
-    private let shieldLabel = NSTextField(labelWithString: "Shields up · permissions blocked")
+    private let shieldLabel = NSTextField(labelWithString: "SHIELDS ENGAGED · PERMISSIONS BLOCKED")
 
-    // Stripe-inspired palette: calm dark chrome, one confident indigo accent.
-    private let chromeColor = NSColor(red: 0.086, green: 0.094, blue: 0.129, alpha: 1)      // #161821
-    private let accentColor = NSColor(red: 0.353, green: 0.322, blue: 0.839, alpha: 1)      // #5A52D6
-    private let chromeText = NSColor(calibratedWhite: 0.92, alpha: 1)
-    private let chromeMuted = NSColor(calibratedWhite: 0.62, alpha: 1)
+    // "Midnight Instrument": near-black chrome, one green accent (Theme.swift).
+    private let chromeColor = Theme.background
+    private let chromeText = Theme.foreground
+    private let chromeMuted = Theme.muted
 
     private var currentTab: Tab? {
         guard currentTabIndex >= 0, currentTabIndex < tabs.count else { return nil }
@@ -32,6 +31,7 @@ final class BrowserWindowController: NSWindowController, WKNavigationDelegate {
         window.minSize = NSSize(width: 760, height: 500)
         window.center()
         window.titlebarAppearsTransparent = true
+        Theme.apply(to: window)
         self.init(window: window)
         buildUI()
         newTab(privateMode: false)
@@ -42,6 +42,8 @@ final class BrowserWindowController: NSWindowController, WKNavigationDelegate {
     private func buildUI() {
         chromeView.wantsLayer = true
         chromeView.layer?.backgroundColor = chromeColor.cgColor
+        container.wantsLayer = true
+        container.layer?.backgroundColor = Theme.background.cgColor
 
         let backButton = toolbarButton(symbol: "chevron.left", action: #selector(goBackAction(_:)))
         let forwardButton = toolbarButton(symbol: "chevron.right", action: #selector(goForwardAction(_:)))
@@ -49,20 +51,14 @@ final class BrowserWindowController: NSWindowController, WKNavigationDelegate {
         let stopButton = toolbarButton(symbol: "xmark", action: #selector(stopAction(_:)))
 
         addressField.placeholderString = "Search DuckDuckGo or enter address"
-        addressField.font = .systemFont(ofSize: 13, weight: .medium)
-        addressField.isBezeled = false
-        addressField.wantsLayer = true
-        addressField.layer?.backgroundColor = NSColor(calibratedWhite: 0.16, alpha: 1).cgColor
-        addressField.layer?.cornerRadius = 8
+        Theme.styleField(addressField)
         addressField.focusRingType = .exterior
-        addressField.textColor = chromeText
-        addressField.backgroundColor = .clear
-        addressField.drawsBackground = false
         addressField.target = self
         addressField.action = #selector(goToAddress(_:))
         addressField.translatesAutoresizingMaskIntoConstraints = false
+        addressField.heightAnchor.constraint(equalToConstant: 26).isActive = true
 
-        shieldLabel.font = .systemFont(ofSize: 11, weight: .semibold)
+        shieldLabel.font = Theme.mono(10, .semibold)
         shieldLabel.textColor = chromeMuted
         shieldLabel.translatesAutoresizingMaskIntoConstraints = false
 
@@ -128,11 +124,11 @@ final class BrowserWindowController: NSWindowController, WKNavigationDelegate {
 
     private func toolbarButton(symbol: String, action: Selector) -> NSButton {
         let button = NSButton()
-        button.bezelStyle = .texturedRounded
         button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: symbol)
         button.imagePosition = .imageOnly
         button.target = self
         button.action = action
+        Theme.styleButton(button)
         button.contentTintColor = chromeText
         button.translatesAutoresizingMaskIntoConstraints = false
         button.widthAnchor.constraint(equalToConstant: 30).isActive = true
@@ -209,12 +205,18 @@ final class BrowserWindowController: NSWindowController, WKNavigationDelegate {
 
         tabStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
         for (index, item) in tabs.enumerated() {
+            let active = index == currentTabIndex
             let title = (item.isPrivate ? "Private · " : "") + item.title
             let button = NSButton(title: title, target: self, action: #selector(selectTabAction(_:)))
             button.isBordered = false
-            button.bezelStyle = .recessed
-            button.font = .systemFont(ofSize: 11, weight: index == currentTabIndex ? .semibold : .regular)
-            button.contentTintColor = index == currentTabIndex ? accentColor : chromeMuted
+            button.focusRingType = .exterior
+            button.attributedTitle = NSAttributedString(string: title, attributes: [
+                .font: Theme.mono(11, active ? .semibold : .regular),
+                .foregroundColor: active ? Theme.accent : chromeMuted,
+            ])
+            button.wantsLayer = true
+            button.layer?.cornerRadius = Theme.radius
+            button.layer?.backgroundColor = (active ? Theme.raised : NSColor.clear).cgColor
             button.tag = index
             button.lineBreakMode = .byTruncatingTail
             button.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
@@ -223,9 +225,9 @@ final class BrowserWindowController: NSWindowController, WKNavigationDelegate {
         }
 
         addressField.stringValue = tab.webView.url?.absoluteString ?? ""
-        shieldLabel.stringValue = tab.isPrivate
-            ? "Shields up · private tab · permissions blocked"
-            : "Shields up · permissions blocked"
+        shieldLabel.attributedStringValue = Theme.eyebrow(tab.isPrivate
+            ? "Shields engaged · private tab · permissions blocked"
+            : "Shields engaged · permissions blocked")
         window?.title = tab.title
     }
 
