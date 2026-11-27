@@ -45,24 +45,30 @@ enum ReaderMode {
                              styleMask: [.titled, .closable, .resizable],
                              backing: .buffered, defer: false)
         panel.title = title
+        Theme.apply(to: panel)
 
+        let eyebrow = NSTextField(labelWithString: "Reader")
+        eyebrow.attributedStringValue = Theme.eyebrow("Reader · cleaned text")
         let header = NSTextField(labelWithString: title)
-        header.font = .systemFont(ofSize: 20, weight: .semibold)
+        header.font = Theme.mono(19, .semibold)
+        header.textColor = Theme.heading
         header.lineBreakMode = .byWordWrapping
         header.maximumNumberOfLines = 3
         let source = NSTextField(labelWithString: url?.absoluteString ?? "")
-        source.font = .systemFont(ofSize: 11)
-        source.textColor = .secondaryLabelColor
+        source.font = Theme.mono(11)
+        source.textColor = Theme.muted
         source.lineBreakMode = .byTruncatingTail
 
         let body = NSTextView()
         body.isEditable = false
+        body.drawsBackground = false
         body.textContainerInset = NSSize(width: 8, height: 8)
         let paragraph = NSMutableParagraphStyle()
         paragraph.lineSpacing = 5
         body.textStorage?.setAttributedString(
             NSAttributedString(string: text, attributes: [
                 .font: NSFont.systemFont(ofSize: 15),
+                .foregroundColor: Theme.foreground,
                 .paragraphStyle: paragraph,
             ]))
 
@@ -74,11 +80,12 @@ enum ReaderMode {
         body.widthAnchor.constraint(equalTo: scroll.widthAnchor, constant: -24).isActive = true
         body.heightAnchor.constraint(greaterThanOrEqualToConstant: 200).isActive = true
 
-        let stack = NSStackView(views: [header, source, scroll])
+        let stack = NSStackView(views: [eyebrow, header, source, scroll])
         stack.orientation = .vertical
         stack.spacing = 10
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.alignment = .leading
+        Theme.fill(stack, Theme.background)
 
         panel.contentView = stack
         NSLayoutConstraint.activate([
