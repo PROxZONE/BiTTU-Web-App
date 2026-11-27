@@ -11,6 +11,8 @@ final class Tab: NSObject {
         self.webView = SecureWebView(frame: .zero, configuration: configuration)
         super.init()
         webView.tab = self
+        // Dark chrome, dark paper: no white flash before a page paints.
+        webView.underPageBackgroundColor = Theme.background
     }
 
     var title: String {
