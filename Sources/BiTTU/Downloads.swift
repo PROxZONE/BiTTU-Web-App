@@ -27,7 +27,7 @@ final class DownloadManager: NSObject, WKDownloadDelegate {
         let expected = response.expectedContentLength
         items.append(Item(filename: name, url: response.url?.absoluteString ?? "unknown",
                           expectedBytes: expected, receivedBytes: 0,
-                          finished: false, failed: false, destination: nil))
+                          finished: false, failed: false, destination: nil)))
         showWindow()
         onChange?()
     }
@@ -86,47 +86,65 @@ final class DownloadManager: NSObject, WKDownloadDelegate {
 
         let panel = NSPanel(styleMask: [.titled, .closable], backing: .buffered, defer: false)
         panel.title = "Downloads"
-        panel.setContentSize(NSSize(width: 460, height: 220))
+        panel.setContentSize(NSSize(width: 480, height: 230))
         panel.isFloatingPanel = false
         panel.becomesKeyOnlyIfNeeded = false
+        Theme.apply(to: panel)
+        if let content = panel.contentView { Theme.fill(content, Theme.surface) }
 
+        let eyebrow = NSTextField(labelWithString: "Downloads")
+        eyebrow.attributedStringValue = Theme.eyebrow("Downloads · local only")
+        eyebrow.translatesAutoresizingMaskIntoConstraints = false
         let label = NSTextField(labelWithString: "No downloads yet.")
-        label.font = .systemFont(ofSize: 13)
+        label.maximumNumberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
+        label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         let refresh = NSButton(title: "Refresh", target: nil, action: nil)
-        refresh.bezelStyle = .rounded
+        Theme.styleTextButton(refresh)
         refresh.translatesAutoresizingMaskIntoConstraints = false
+        panel.contentView?.addSubview(eyebrow)
         panel.contentView?.addSubview(label)
         panel.contentView?.addSubview(refresh)
 
         NSLayoutConstraint.activate([
-            label.topAnchor.constraint(equalTo: panel.contentView!.topAnchor, constant: 16),
-            label.leadingAnchor.constraint(equalTo: panel.contentView!.leadingAnchor, constant: 16),
+            eyebrow.topAnchor.constraint(equalTo: panel.contentView!.topAnchor, constant: 16),
+            eyebrow.leadingAnchor.constraint(equalTo: panel.contentView!.leadingAnchor, constant: 16),
+            label.topAnchor.constraint(equalTo: eyebrow.bottomAnchor, constant: 10),
+            label.leadingAnchor.constraint(equalTo: eyebrow.leadingAnchor),
             label.trailingAnchor.constraint(lessThanOrEqualTo: panel.contentView!.trailingAnchor, constant: -16),
             refresh.bottomAnchor.constraint(equalTo: panel.contentView!.bottomAnchor, constant: -12),
             refresh.trailingAnchor.constraint(equalTo: panel.contentView!.trailingAnchor, constant: -12),
         ])
 
+        // Each state reads as its own signal: queued (muted), saved (accent), failed (danger).
         let update: () -> Void = {
+            let text = NSMutableAttributedString()
+            func append(_ piece: String, _ color: NSColor) {
+                text.append(NSAttributedString(string: piece, attributes: [
+                    .font: Theme.mono(11.5), .foregroundColor: color,
+                ]))
+            }
+
             if DownloadManager.items.isEmpty {
-                label.stringValue = "No downloads yet."
+                append("No downloads yet. Files you download land in ~/Downloads.", Theme.muted)
+                label.attributedStringValue = text
                 return
             }
             let formatter = ByteCountFormatter()
-            let lines = DownloadManager.items.map { item -> String in
-                var line = item.filename + " — "
+            for (index, item) in DownloadManager.items.enumerated() {
+                if index > 0 { append(String(UnicodeScalar(10)), Theme.foreground) }
+                append(item.filename + " — ", Theme.foreground)
                 if item.failed {
-                    line += "failed"
+                    append("failed", Theme.danger)
                 } else if item.finished {
-                    line += "saved to " + (item.destination?.path ?? "unknown")
+                    append("saved to " + (item.destination?.path ?? "unknown"), Theme.accent)
                 } else {
                     let received = formatter.string(forByteCount: item.receivedBytes)
                     let expected = item.expectedBytes > 0 ? formatter.string(forByteCount: item.expectedBytes) : "?"
-                    line += received + " / " + expected
+                    append(received + " / " + expected, Theme.muted)
                 }
-                return line
             }
-            label.stringValue = lines.joined(separator: String(UnicodeScalar(10)))
+            label.attributedStringValue = text
         }
         DownloadManager.onChange = update
         refresh.target = DownloadManager.shared
