@@ -10,3 +10,5 @@ Sources/BiTTU/Resources/blocklists/easyprivacy*.json
 
 __pycache__/
 *.pyc
+windows/BiTTU/bin/
+windows/BiTTU/obj/
