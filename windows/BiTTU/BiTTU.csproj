@@ -17,6 +17,11 @@
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
   </ItemGroup>
 
+  <!-- Dark HTTPS-only warning page, embedded so single-file publish keeps it. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Resources/warning.html" LogicalName="BiTTU.warning.html" />
+  </ItemGroup>
+
   <!-- Same bundled rule lists the macOS app ships. -->
   <ItemGroup>
     <Content Include="../../Sources/BiTTU/Resources/blocklists/*.json"
