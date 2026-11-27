@@ -4,6 +4,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var windowController: BrowserWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Every BiTTU surface is dark; panels, sheets, alerts and menus inherit it.
+        NSApp.appearance = NSAppearance(named: .darkAqua)
         AutoUpdater.shared.start()
         CookiePolicy.load()
         ContentBlocker.compileAll { [weak self] in
