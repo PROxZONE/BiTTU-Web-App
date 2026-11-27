@@ -6,11 +6,48 @@ import WebKit
 enum LibraryWindows {
     static private var bookmarksWindow: NSWindow?
     static private var historyWindow: NSWindow?
-    static private var enginesWindow: NSWindow?
     static private(set) weak var browser: BrowserWindowController?
+    static private var enginesWindow: NSWindow?
+
 
     static func attach(browser: BrowserWindowController) {
         self.browser = browser
+    }
+
+    // MARK: Window shell
+
+    /// One dark window per library screen; rebuilt content inherits the theme.
+    private static func reuse(_ slot: inout NSWindow?, title: String, width: CGFloat, height: CGFloat) -> NSWindow {
+        let window: NSWindow
+        if let existing = slot {
+            window = existing
+        } else {
+            window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: width, height: height),
+                              styleMask: [.titled, .closable, .miniaturizable, .resizable],
+                              backing: .buffered, defer: false)
+            window.isReleasedWhenClosed = false
+            slot = window
+        }
+        window.title = title
+        Theme.apply(to: window)
+        if let content = window.contentView { Theme.fill(content, Theme.background) }
+        return window
+    }
+
+    /// Mono body text; muted for helper copy, foreground for content.
+    private static func label(_ text: String, muted: Bool = true) -> NSTextField {
+        let field = NSTextField(labelWithString: text)
+        field.attributedStringValue = NSAttributedString(string: text, attributes: [
+            .font: Theme.mono(11.5),
+            .foregroundColor: muted ? Theme.muted : Theme.foreground,
+        ])
+        return field
+    }
+
+    private static func eyebrow(_ text: String) -> NSTextField {
+        let field = NSTextField(labelWithString: text)
+        field.attributedStringValue = Theme.eyebrow(text)
+        return field
     }
 
     // MARK: Bookmarks
@@ -31,8 +68,9 @@ enum LibraryWindows {
         stack.translatesAutoresizingMaskIntoConstraints = false
 
         let data = UserData.shared
+        stack.addArrangedSubview(eyebrow("Bookmarks · local only"))
         if data.bookmarks.isEmpty {
-            stack.addArrangedSubview(NSTextField(labelWithString: "No bookmarks yet. Press ⌘D on a page to add one."))
+            stack.addArrangedSubview(label("No bookmarks yet. Press ⌘D on a page to add one."))
         }
         for bookmark in data.bookmarks {
             let row = NSStackView(views: [openButton(title: bookmark.title, urlString: bookmark.url),
@@ -60,8 +98,9 @@ enum LibraryWindows {
         stack.translatesAutoresizingMaskIntoConstraints = false
 
         let entries = UserData.shared.history.reversed()
+        stack.addArrangedSubview(eyebrow("History · this device only"))
         if entries.isEmpty {
-            stack.addArrangedSubview(NSTextField(labelWithString: "History is empty."))
+            stack.addArrangedSubview(label("History is empty. Private tabs are never recorded."))
         }
         let formatter = RelativeDateTimeFormatter()
         for entry in entries {
@@ -74,7 +113,7 @@ enum LibraryWindows {
         }
 
         let clear = NSButton(title: "Clear History", target: nil, action: nil)
-        clear.bezelStyle = .rounded
+        Theme.styleTextButton(clear)
         clear.translatesAutoresizingMaskIntoConstraints = false
         window.contentView?.addSubview(stack)
         window.contentView?.addSubview(clear)
@@ -106,7 +145,8 @@ enum LibraryWindows {
         stack.alignment = .leading
         stack.spacing = 6
         stack.translatesAutoresizingMaskIntoConstraints = false
-        stack.addArrangedSubview(NSTextField(labelWithString: "Default engine used for address-bar searches:"))
+        stack.addArrangedSubview(eyebrow("Search engines · local only"))
+        stack.addArrangedSubview(label("Default engine used for address-bar searches:", muted: false))
 
         for engine in data.engines {
             let row = NSStackView()
@@ -131,14 +171,18 @@ enum LibraryWindows {
 
         let nameField = NSTextField(string: "")
         nameField.placeholderString = "Engine name"
+        Theme.styleField(nameField, size: 11.5)
         nameField.translatesAutoresizingMaskIntoConstraints = false
         nameField.widthAnchor.constraint(equalToConstant: 150).isActive = true
+        nameField.heightAnchor.constraint(equalToConstant: 24).isActive = true
         let templateField = NSTextField(string: "")
         templateField.placeholderString = "URL with {query}, e.g. https://example.com/?q={query}"
+        Theme.styleField(templateField, size: 11.5)
         templateField.translatesAutoresizingMaskIntoConstraints = false
         templateField.widthAnchor.constraint(equalToConstant: 280).isActive = true
+        templateField.heightAnchor.constraint(equalToConstant: 24).isActive = true
         let add = NSButton(title: "Add Engine", target: LibraryWindows.sharedTarget, action: #selector(LibraryTarget.addEngine(_:)))
-        add.bezelStyle = .rounded
+        Theme.styleTextButton(add, primary: true)
 
         let addRow = NSStackView(views: [nameField, templateField, add])
         addRow.orientation = .horizontal
@@ -167,19 +211,28 @@ enum LibraryWindows {
     private static func openButton(title: String, urlString: String) -> NSButton {
         let button = NSButton(title: title, target: nil, action: nil)
         button.isBordered = false
+        button.focusRingType = .exterior
         button.lineBreakMode = .byTruncatingTail
-        button.contentTintColor = .linkColor
+        button.attributedTitle = NSAttributedString(string: title, attributes: [
+            .font: Theme.mono(11.5),
+            .foregroundColor: Theme.foreground,
+        ])
+        button.contentTintColor = Theme.accent
         button.target = LibraryWindows.sharedTarget
         button.action = #selector(LibraryTarget.openURL(_:))
         button.identifier = NSUserInterfaceItemIdentifier(urlString)
-        button.maximumContentSizeAdvancement = NSSize(width: 420, height: 40)
         return button
     }
 
     private static func deleteButton(kind: DeleteKind, key: String) -> NSButton {
         let button = NSButton(title: kind.label, target: nil, action: nil)
         button.isBordered = false
-        button.contentTintColor = .secondaryLabelColor
+        button.focusRingType = .exterior
+        button.attributedTitle = NSAttributedString(string: kind.label, attributes: [
+            .font: Theme.mono(10.5),
+            .foregroundColor: Theme.muted,
+        ])
+        button.contentTintColor = Theme.muted
         button.target = LibraryWindows.sharedTarget
         button.action = kind.selector
         button.identifier = NSUserInterfaceItemIdentifier(key)
