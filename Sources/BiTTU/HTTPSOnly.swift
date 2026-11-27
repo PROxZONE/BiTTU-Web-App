@@ -28,8 +28,6 @@ enum HTTPSOnly {
     }
 
     /// HTML-escapes a URL for safe interpolation into the warning page.
-    /// Built with string concatenation so the source contains no escaped
-    /// quote characters (escaping-proof for content-layer writes).
     static func escapedHTML(_ text: String) -> String {
         let quote = Character(UnicodeScalar(34))
         var out = text
@@ -40,7 +38,7 @@ enum HTTPSOnly {
         return out
     }
 
-    /// The standalone warning page. Tapping "Go to the insecure site" posts
+    /// The standalone warning page. Tapping "Continue to insecure site" posts
     /// back through the bittuHttps script-message handler, which allows the
     /// host for this session and loads it.
     static func warningPage(for url: URL) -> String {
@@ -49,27 +47,52 @@ enum HTTPSOnly {
         <!DOCTYPE html><html><head><meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
-            body { font-family: -apple-system, sans-serif; background: #1c1c2e; color: #e8e8f0;
-                   display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-            .card { max-width: 30rem; padding: 2rem; background: #262640; border-radius: 12px; }
-            h1 { margin-top: 0; font-size: 1.3rem; }
-            .url { color: #a9a9ff; word-break: break-all; font-size: .85rem; }
-            p { line-height: 1.5; font-size: .95rem; }
-            button { margin-top: 1rem; padding: .7rem 1.2rem; border-radius: 8px; border: 0;
-                     font-size: .95rem; cursor: pointer; }
-            .back { background: #4f46e5; color: white; }
-            .go { background: transparent; color: #e8e8f0; border: 1px solid #4b4b6b; margin-left: .5rem; }
+            :root {
+                color-scheme: dark;
+                --bg: #0A0E14; --surface: #11161F; --raised: #161D28; --border: #25303D;
+                --fg: #DCE6F2; --heading: #F3F8FF; --muted: #8E9DB1;
+                --accent: #5BE49B; --accent-ink: #06281A; --radius: 6px;
+            }
+            * { box-sizing: border-box; }
+            body { margin: 0; min-height: 100vh; padding: 24px;
+                   display: flex; align-items: center; justify-content: center;
+                   background: var(--bg); color: var(--fg);
+                   font: 400 15px/1.6 "SF Mono", ui-monospace, Menlo, monospace; }
+            .card { width: 100%; max-width: 30rem; padding: 28px;
+                    background: var(--surface); border: 1px solid var(--border);
+                    border-radius: var(--radius); }
+            .eyebrow { margin: 0 0 14px; font-size: 11px; font-weight: 600;
+                       letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+            h1 { margin: 0 0 12px; font-size: 20px; line-height: 1.35;
+                 font-weight: 600; color: var(--heading); }
+            .url { margin: 0 0 16px; font-size: 13px; color: var(--accent); word-break: break-all; }
+            p { margin: 0; line-height: 1.6; }
+            .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+            button { min-height: 40px; padding: 10px 16px; border-radius: var(--radius);
+                     border: 1px solid var(--border); background: var(--raised); color: var(--fg);
+                     font: 600 13px/1 "SF Mono", ui-monospace, Menlo, monospace; cursor: pointer; }
+            button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+            button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+            @media (prefers-reduced-motion: no-preference) {
+                button { transition: background-color .15s ease, border-color .15s ease; }
+                button:hover { border-color: var(--accent); }
+                button.primary:hover { background: #7BEDB0; }
+            }
+            @media (max-width: 420px) { .card { padding: 20px; } button { width: 100%; } }
         </style></head><body>
         <div class="card">
-            <h1>&#128274; BiTTU blocked an insecure connection</h1>
+            <p class="eyebrow">Shields engaged &#183; insecure request</p>
+            <h1>This page would travel unencrypted.</h1>
             <p class="url">\(display)</p>
-            <p>The connection is not encrypted, so anything you send — passwords,
-               messages, payments — could be read or changed by anyone on the
-               network. A secure version may not exist.</p>
-            <button class="back" onclick="history.back()">Go back</button>
-            <button class="go"
-                    onclick="webkit.messageHandlers.bittuHttps.postMessage(this.dataset.url)"
-                    data-url="\(display)">Continue to insecure site</button>
+            <p>Anything you send here &#8212; passwords, messages, payments &#8212; can be
+               read or changed by anyone on this network. BiTTU tried HTTPS first and
+               found no secure version behind this address.</p>
+            <div class="actions">
+                <button class="primary" onclick="history.back()">Go back</button>
+                <button class="go"
+                        onclick="webkit.messageHandlers.bittuHttps.postMessage(this.dataset.url)"
+                        data-url="\(display)">Continue to insecure site</button>
+            </div>
         </div></body></html>
         """
     }
