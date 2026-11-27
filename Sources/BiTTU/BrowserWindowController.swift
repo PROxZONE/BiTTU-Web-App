@@ -13,7 +13,7 @@ final class BrowserWindowController: NSWindowController, WKNavigationDelegate {
     private let addressField = NSTextField()
     private let shieldLabel = NSTextField(labelWithString: "SHIELDS ENGAGED · PERMISSIONS BLOCKED")
 
-    // "Midnight Instrument": near-black chrome, one green accent (Theme.swift).
+    // Midnight Instrument: near-black chrome, one green accent (Theme.swift).
     private let chromeColor = Theme.background
     private let chromeText = Theme.foreground
     private let chromeMuted = Theme.muted
@@ -263,7 +263,7 @@ final class BrowserWindowController: NSWindowController, WKNavigationDelegate {
         refreshChrome()
     }
 
-    // MARK: WKNavigationDelegate — the security checkpoint
+    // MARK: WKNavigationDelegate
 
     func webView(_ webView: WKWebView,
                  decidePolicyFor navigationAction: WKNavigationAction,
@@ -273,7 +273,6 @@ final class BrowserWindowController: NSWindowController, WKNavigationDelegate {
             return
         }
         if let upgraded = SecurityPolicy.upgraded(navigationAction.request.url), upgraded != navigationAction.request.url {
-            NSLog("BiTTU upgraded http → https: \(upgraded.absoluteString)")
             decisionHandler(.cancel)
             webView.load(URLRequest(url: upgraded))
             return
@@ -291,7 +290,6 @@ final class BrowserWindowController: NSWindowController, WKNavigationDelegate {
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation?) { refreshChrome() }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation?, withError error: Error) {
-        NSLog("BiTTU navigation failed: \(error.localizedDescription)")
         refreshChrome()
     }
 }
